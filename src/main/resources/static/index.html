@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="./res/el.css">
+    <style type="text/css">
+        .dir{color: blue; text-decoration: underline;}
+        .pointerOn{cursor:pointer;}
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <el-row>
+        <el-button @click="getRoot(0)">WM</el-button>
+        <el-button @click="getRoot(1)" style="float: right;">YM</el-button>
+    </el-row>
+    <el-row>
+        <div style="text-align:center">根路径：{{rootPath}}</div>
+    </el-row>
+    <el-card class="box-card">
+        <div slot="header" class="clearfix">
+            <el-row>
+                <span>当前路径:{{currentPath}}</span>
+                <el-button @click="getBack()"  style="float: right;" type="primary">返回上一层</el-button>
+            </el-row>
+        </div>
+
+        <div v-for="file in files"
+            @click="selectFile(file)"
+            :class="{'dir':file.isDirectory, pointerOn:true, text: true, item: true}">
+            {{file.name}}
+        </div>
+
+    </el-card>
+</div>
+</body>
+<!-- import Vue before Element -->
+<script src="./res/vue.js"></script>
+<!-- import JavaScript -->
+<script src="./res/el.js"></script>
+
+<script src="./res/axios.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            type:1,
+            rootPath: "",
+            currentPath: "",
+            files: [{
+                name: "AAA",
+                path: "",
+                isDirectory: true
+            }, {
+                name: "BBB",
+                path: "",
+                isDirectory: false
+            }]
+        },
+        mounted () {
+            this.getRoot(this.type)
+        },
+        methods: {
+            selectFile(file) {
+
+                if (file.isDirectory) {
+                    this.currentPath = file.path;
+                    console.log("file is dir:" + file.path)
+                    axios.get('./video/list?path=' + file.path)
+                        .then(response => {
+                            console.log(response.data)
+                            this.files = response.data.files;
+                            this.currentPath = response.data.path;
+                        })
+                        .catch(function (error) { // 请求失败处理
+                            console.log(error);
+                        });
+                } else {
+                    let rootPath = this.rootPath;
+                    let relativePath = file.path.replace(rootPath, '')
+                    console.log(relativePath);
+                    let type = this.type == 0 ? '/wm' : '/ym';
+                    // 返回 web 主机的域名，如：http://127.0.0.1:8080/testdemo/test.html?id=1&name=test
+                    let protocol = window.location.protocol;
+                    let host = window.location.hostname;
+
+                    let videoUrl = protocol + "//" + host + ":80" + type + relativePath;
+
+                    // window.location.href= videoUrl;
+                    window.open(videoUrl)
+                }
+            },
+            getRoot(type) {
+                console.log(type)
+                this.type = type;
+                axios.get('./video/' + type)
+                    .then(response => {
+                        let rootPath = response.data;
+                        this.rootPath = rootPath;
+                        this.selectFile({path:rootPath, isDirectory: true})
+                    })
+                    .catch(function (error) { // 请求失败处理
+                        console.log(error);
+                    });
+            },
+            getBack() {
+                axios.get('./video/back?currentPath=' + this.currentPath)
+                    .then(response => {
+                        console.log(response.data)
+                        this.files = response.data.files;
+                        this.currentPath = response.data.path;
+                    })
+                    .catch(function (error) { // 请求失败处理
+                        console.log(error);
+                    });
+            }
+        }
+    })
+</script>
+</html>
