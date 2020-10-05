@@ -20,17 +20,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class VideoController {
 
-    @Value("${wm.root}")
-    private String wmRoot;
+    @Value("${file1.root}")
+    private String fileRootOne;
 
-    @Value("${ym.root}")
-    private String ymRoot;
+    @Value("${file2.root}")
+    private String fileRootTwo;
 
     @GetMapping("/{type}")
     public String redirectToVideo(@PathVariable Integer type, HttpSession session) {
         log.info("type = {}", type);
 
-        String root = type.equals(0) ? wmRoot : ymRoot;
+        String root = type.equals(0) ? fileRootOne : fileRootTwo;
         session.setAttribute("rootPath", root);
         return root;
     }
